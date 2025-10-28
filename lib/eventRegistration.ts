@@ -6,6 +6,7 @@ export interface EventType {
   name: string;
   eventDate: string;
   registered: boolean;
+  registrationsOpen: boolean;
   eventUrl: string | null;
 }
 
@@ -28,6 +29,7 @@ export const getEvents = async (userId: string) => {
       finalEvents.push({
         ...e,
         eventDate: e.eventDate.toDateString(),
+        registrationsOpen: e.registrationsOpen,
         registered: true,
       });
     });
@@ -35,6 +37,7 @@ export const getEvents = async (userId: string) => {
         if(!(userEventIds.includes(e.id))) finalEvents.push({
         ...e,
         eventDate: e.eventDate.toDateString(),
+        registrationsOpen: e.registrationsOpen,
         registered: false,
       });
     })
@@ -42,6 +45,7 @@ export const getEvents = async (userId: string) => {
     return allEvents.map(e => ({
         ...e,
         eventDate: e.eventDate.toDateString(),
+        registrationsOpen: e.registrationsOpen,
         registered: false,
       }));
     }
@@ -49,6 +53,16 @@ export const getEvents = async (userId: string) => {
 };
 
 export const registerForEvent = async (eventId: string, userId: string) => {
+  const event = await prisma.event.findUnique({
+    where: {
+      id: eventId
+    }
+  });
+
+  if (!event || !event.registrationsOpen) {
+    return false;
+  }
+
   try{
     await prisma.user.update({
       where: {
